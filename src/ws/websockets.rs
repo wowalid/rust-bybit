@@ -27,7 +27,7 @@ pub struct GateIOContentError {
 }
 
 const MAINNET_SPOT: &str = "wss://stream.bybit.com/v5/public/spot";
-
+const MAINNET_PRIVATE: &str = "wss://stream.bybit.com/v5/private";
 
 /// First errors are technical errors
 /// All unhandled gate-io content errors are GateIOError
@@ -126,6 +126,15 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
     /// Connect to a websocket endpoint
     pub async fn connect(&mut self) -> Result<()> {
         let wss: String = format!("{}", MAINNET_SPOT.to_string());
+        println!("{:?}", wss);
+        let url = Url::parse(&wss)?;
+
+        self.handle_connect(url).await
+    }
+
+
+    pub async fn connect_private(&mut self) -> Result<()> {
+        let wss: String = format!("{}", MAINNET_PRIVATE.to_string());
         println!("{:?}", wss);
         let url = Url::parse(&wss)?;
 
