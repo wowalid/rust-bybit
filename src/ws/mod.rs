@@ -4,6 +4,7 @@ pub mod option;
 pub mod private;
 pub mod response;
 pub mod spot;
+pub mod websockets;
 
 use callback::Arg;
 use callback::Callback;
@@ -136,6 +137,8 @@ struct Credentials {
     api_key: String,
     secret: String,
 }
+
+
 
 async fn run<'a, A>(
     uri: &str,
