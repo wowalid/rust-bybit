@@ -18,7 +18,7 @@ path = "src/lib.rs"
 
 [dependencies]
 futures = "0.3"
-tokio = { version = "1.40.0", features = ["full"] }
+tokio = { version = "1.36.0", features = ["full"] }
 tungstenite = { version = "0.18", features = ["native-tls"] }
 thiserror = "1.0"
 serde = { version = "1.0", features = ["derive"] }
