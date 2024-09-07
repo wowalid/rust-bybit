@@ -133,9 +133,9 @@ struct Op<'a> {
     args: Vec<String>,
 }
 
-struct Credentials {
-    api_key: String,
-    secret: String,
+pub struct Credentials {
+    pub api_key: String,
+    pub secret: String,
 }
 
 
