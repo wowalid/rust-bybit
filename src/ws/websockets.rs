@@ -241,6 +241,7 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
                             return Ok(());
                         }
 
+                        println!("{:?}", msg);
                         if msg.contains("subscribe") {
                             continue;
                         }
