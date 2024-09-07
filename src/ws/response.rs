@@ -120,6 +120,19 @@ pub struct BasePrivateResponse<'a, Data> {
     pub data: Data,
 }
 
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BasePrivateResponseStatic<Data> {
+    /// Message ID.
+    pub id: String,
+    /// Topic name.
+    pub topic: String,
+    /// Data created timestamp (ms).
+    pub creation_time: u64,
+    /// The data vary on the topic.
+    pub data: Data,
+}
 /// The (price, size) pair of orderbook.
 #[derive(Deserialize, Debug)]
 pub struct OrderbookItem<'a>(pub &'a str, pub &'a str);
@@ -620,6 +633,83 @@ pub struct Order<'a> {
     pub updated_time: &'a str,
 }
 
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct OrderStatic {
+    /// Product type.
+    /// - Unified account: `spot`, `linear`, `option`.
+    /// - Normal account: `linear`, `inverse`.
+    pub category: String,
+    /// Order ID.
+    pub order_id: String,
+    /// User customised order ID.
+    pub order_link_id: String,
+    /// Whether to borrow. `spot` returns this field only. 0 (default): false, 1: true.
+    pub is_leverage: String,
+    /// Block trade ID.
+    pub block_trade_id: String,
+    /// Symbol name.
+    pub symbol: String,
+    /// Order price.
+    pub price: String,
+    /// Order qty.
+    pub qty: String,
+    /// Side. `Buy`, `Sell`.
+    pub side: String,
+    /// Position index. Used to identify positions in different position modes.
+    pub position_idx: u8,
+    /// Order status.
+    pub order_status: String,
+    /// Cancel type.
+    pub cancel_type: String,
+    /// Reject reason.
+    pub reject_reason: String,
+    /// Average filled price. If unfilled, it is "".
+    pub avg_price:String,
+    /// The remaining qty not executed.
+    pub leaves_qty: String,
+    /// The remaining value not executed.
+    pub leaves_value: String,
+    /// Cumulative executed order qty.
+    pub cum_exec_qty: String,
+    /// Cumulative executed order value.
+    pub cum_exec_value: String,
+    /// Cumulative executed trading fee.
+    pub cum_exec_fee: String,
+    /// Time in force.
+    pub time_in_force: String,
+    /// Order type. `Market`, `Limit`.
+    pub order_type: String,
+    /// Stop order type.
+    pub stop_order_type: String,
+    /// Implied volatility.
+    pub order_iv: String,
+    /// Trigger price. If stopOrderType=TrailingStop, it is activate price. Otherwise, it is trigger price.
+    pub trigger_price: String,
+    /// Take profit price.
+    pub take_profit: String,
+    /// Stop loss price.
+    pub stop_loss: String,
+    /// The price type to trigger take profit.
+    pub tp_trigger_by: String,
+    /// The price type to trigger stop loss.
+    pub sl_trigger_by: String,
+    /// Trigger direction. 1: rise, 2: fall.
+    pub trigger_direction: u8,
+    /// The price type of trigger price.
+    pub trigger_by: String,
+    /// Last price when place the order. For linear only.
+    pub last_price_on_created: String,
+    /// Reduce only. `true` means reduce position size.
+    pub reduce_only: bool,
+    /// Close on trigger.
+    pub close_on_trigger: bool,
+    /// Order created timestamp (ms).
+    pub created_time: String,
+    /// Order updated timestamp (ms).
+    pub updated_time: String,
+}
 /// The wallet coin data.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]

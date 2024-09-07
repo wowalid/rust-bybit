@@ -17,6 +17,8 @@ use thiserror::Error;
 
 use crate::ws::Op;
 
+use super::{auth_req, Credentials};
+
 #[derive(Debug, Deserialize, Error)]
 #[error("label: {label}, msg: {message}")]
 pub struct GateIOContentError {
@@ -119,6 +121,8 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
         }
     }
 
+  
+
     /// Connect to a websocket endpoint
     pub async fn connect(&mut self) -> Result<()> {
         let wss: String = format!("{}", MAINNET_SPOT.to_string());
@@ -135,6 +139,42 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
                 Ok(())
             }
             Err(e) => Err(Error::Msg(format!("Error during handshake {e}"))),
+        }
+    }
+
+
+
+    pub async fn subscribe_orders(
+        &mut self,
+        credentials : &Credentials
+    ) -> Result<()> {
+        if let Some((ref mut socket, _)) = self.socket {
+            let start = SystemTime::now();
+            let since_the_epoch = start
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards");
+            let t = since_the_epoch.as_secs();
+
+            let req = auth_req(credentials);
+
+            socket
+            .send(Message::Text(req))
+            .await?;
+
+            let topic = "order".to_string();
+
+            let sub = Op {
+                op: "subscribe",
+                args: vec![topic],
+            };
+
+
+            socket
+                .send(Message::Text(serde_json::to_string(&sub)?))
+                .await?;
+            Ok(())
+        } else {
+            Err(Error::Msg("Not able to send the message".to_string()))
         }
     }
 
