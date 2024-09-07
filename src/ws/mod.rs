@@ -174,7 +174,7 @@ where
         match ws.read_message() {
             Ok(msg) => match msg {
                 Message::Text(content) => {
-                    debug!("Received: {}", content);
+                    log::info!("Received: {}", content);
                     match serde_json::from_str(&content) {
                         Ok(res) => { callback(res).await; },
                         Err(e) => error!("Error: {}", e),
