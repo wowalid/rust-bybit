@@ -246,6 +246,10 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
                             continue;
                         }
 
+                        if msg.contains("auth") {
+                            continue;
+                        }
+
                         let event: WE = from_str(msg.as_str())?;
                         (self.handler)(event).await?;
                     }
