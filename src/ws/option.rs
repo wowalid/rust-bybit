@@ -1,6 +1,7 @@
 use super::callback::Callback;
 use super::response::OptionPublicResponseArg;
 use super::run;
+use super::HandlerFuture;
 use super::Subscriber;
 use crate::error::Result;
 
@@ -43,8 +44,8 @@ impl OptionWebsocketApiClient {
         self.subscriber.sub_ticker(symbol.as_ref());
     }
 
-    pub fn run<C: Callback<OptionPublicResponseArg>>(&self, callback: C) -> Result<()> {
-        run(&self.uri, self.subscriber.topics(), None, callback)
+    pub async fn run<'a>(&self, callback: Box<dyn FnMut(OptionPublicResponseArg) -> HandlerFuture + 'a + Send>) -> Result<()> {
+        run(&self.uri, self.subscriber.topics(), None, callback).await
     }
 }
 

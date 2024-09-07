@@ -1,6 +1,7 @@
 use super::callback::Callback;
 use super::response::FuturePublicResponseArg;
 use super::run;
+use super::HandlerFuture;
 use super::Subscriber;
 use crate::error::Result;
 use crate::{FutureRole, KlineInterval};
@@ -54,9 +55,8 @@ impl FutureWebsocketApiClient {
     pub fn subscribe_liquidation<S: AsRef<str>>(&mut self, symbol: S) {
         self.subscriber.sub_liquidation(symbol.as_ref());
     }
-
-    pub fn run<C: Callback<FuturePublicResponseArg>>(&self, callback: C) -> Result<()> {
-        run(&self.uri, self.subscriber.topics(), None, callback)
+    pub async fn run<'a>(&self, callback: Box<dyn FnMut(FuturePublicResponseArg) -> HandlerFuture + 'a + Send>) -> Result<()> {
+        run(&self.uri, self.subscriber.topics(), None, callback).await
     }
 }
 

@@ -8,12 +8,14 @@ pub mod spot;
 use callback::Arg;
 use callback::Callback;
 use log::*;
+use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::net::TcpStream;
 use std::sync::mpsc::Receiver;
 use std::{sync::mpsc, thread, time::Duration};
 use tungstenite::{connect, stream::MaybeTlsStream, Message, WebSocket};
 
+use futures::future::BoxFuture;
 use crate::error::Result;
 use crate::util::millis;
 use crate::util::sign;
@@ -23,7 +25,7 @@ use self::future::FutureWebSocketApiClientBuilder;
 use self::option::OptionWebSocketApiClientBuilder;
 use self::private::PrivateWebSocketApiClientBuilder;
 use self::spot::SpotWebSocketApiClientBuilder;
-
+type HandlerFuture = BoxFuture<'static, Result<()>>;
 /// A factory to create different kind of websocket api clients (spot / future / option / private).
 pub struct WebSocketApiClient;
 
@@ -135,15 +137,14 @@ struct Credentials {
     secret: String,
 }
 
-fn run<A, C>(
+async fn run<'a, A>(
     uri: &str,
     topics: &Vec<String>,
     credentials: Option<&Credentials>,
-    mut callback: C,
+    mut callback:  Box<dyn FnMut(A) -> HandlerFuture + 'a + Send>,
 ) -> Result<()>
 where
-    A: Arg,
-    C: Callback<A>,
+    A: Arg + Send + Sync + 'a + DeserializeOwned 
 {
     let (mut ws, _) = connect(uri)?;
 
@@ -175,9 +176,9 @@ where
                 Message::Text(content) => {
                     debug!("Received: {}", content);
                     match serde_json::from_str(&content) {
-                        Ok(res) => callback(res),
+                        Ok(res) => { callback(res).await; },
                         Err(e) => error!("Error: {}", e),
-                    }
+                    };
                 }
                 _ => {}
             },

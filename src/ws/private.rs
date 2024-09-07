@@ -1,6 +1,6 @@
 use super::callback::Callback;
 use super::response::PrivateResponseArg;
-use super::Subscriber;
+use super::{HandlerFuture, Subscriber};
 use super::{run, Credentials};
 use crate::error::Result;
 
@@ -33,14 +33,13 @@ impl PrivateWebsocketApiClient {
     pub fn subscribe_greek(&mut self) {
         self.subscriber.sub_greek();
     }
-
-    pub fn run<C: Callback<PrivateResponseArg>>(&self, callback: C) -> Result<()> {
+    pub async fn run<'a>(&self, callback: Box<dyn FnMut(PrivateResponseArg) -> HandlerFuture + 'a + Send>) -> Result<()> {
         run(
             &self.uri,
             self.subscriber.topics(),
             Some(&self.credentials),
             callback,
-        )
+        ).await
     }
 }
 

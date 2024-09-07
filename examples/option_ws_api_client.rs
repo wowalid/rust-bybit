@@ -15,15 +15,5 @@ fn main() {
     client.subscribe_trade(base_coin);
     client.subscribe_ticker(symbol);
 
-    let callback = |res: OptionPublicResponse| match res {
-        OptionPublicResponse::Orderbook(res) => println!("Orderbook: {:?}", res),
-        OptionPublicResponse::Trade(res) => println!("Trade: {:?}", res),
-        OptionPublicResponse::Ticker(res) => println!("Ticker: {:?}", res),
-        OptionPublicResponse::Pong(res) => println!("Pong: {:?}", res),
-        OptionPublicResponse::Subscription(res) => println!("Subscription: {:?}", res),
-    };
 
-    if let Err(e) = client.run(callback) {
-        eprintln!("Error: {e}")
-    }
 }

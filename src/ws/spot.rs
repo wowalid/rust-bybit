@@ -1,6 +1,7 @@
 use super::callback::Callback;
 use super::response::SpotPublicResponseArg;
 use super::run;
+use super::HandlerFuture;
 use super::Subscriber;
 use crate::error::Result;
 use crate::KlineInterval;
@@ -57,9 +58,8 @@ impl SpotWebsocketApiClient {
     pub fn subscribe_lt_nav<S: AsRef<str>>(&mut self, symbol: S) {
         self.subscriber.sub_lt_nav(symbol.as_ref());
     }
-
-    pub fn run<C: Callback<SpotPublicResponseArg>>(&self, callback: C) -> Result<()> {
-        run(&self.uri, self.subscriber.topics(), None, callback)
+    pub async fn run<'a>(&self, callback: Box<dyn FnMut(SpotPublicResponseArg) -> HandlerFuture + 'a + Send>) -> Result<()> {
+        run(&self.uri, self.subscriber.topics(), None, callback).await
     }
 }
 

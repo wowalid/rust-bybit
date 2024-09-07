@@ -17,14 +17,5 @@ fn main() {
     client.subscribe_kline(symbol, KlineInterval::Min1);
     client.subscribe_liquidation(symbol);
 
-    if let Err(e) = client.run(|res| match res {
-        FuturePublicResponse::Orderbook(res) => println!("Orderbook: {:?}", res),
-        FuturePublicResponse::Trade(res) => println!("Trade: {:?}", res),
-        FuturePublicResponse::Ticker(res) => println!("Ticker: {:?}", res),
-        FuturePublicResponse::Kline(res) => println!("Kline: {:?}", res),
-        FuturePublicResponse::Liquidation(res) => println!("Liquidation: {:?}", res),
-        FuturePublicResponse::Op(res) => println!("Op: {:?}", res),
-    }) {
-        eprintln!("Error: {e}")
-    }
+
 }

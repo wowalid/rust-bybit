@@ -689,7 +689,7 @@ pub enum SpotPublicResponse<'a> {
     LtNav(BasePublicResponse<'a, LtNav<'a>>),
     Op(OpResponse<'a>),
 }
-
+#[derive(Deserialize, Debug)]
 pub struct SpotPublicResponseArg;
 impl Arg for SpotPublicResponseArg {
     type ValueType<'a> = SpotPublicResponse<'a>;
@@ -706,7 +706,7 @@ pub enum FuturePublicResponse<'a> {
     Liquidation(BasePublicResponse<'a, Liquidation<'a>>),
     Op(OpResponse<'a>),
 }
-
+#[derive(Deserialize)]
 pub struct FuturePublicResponseArg;
 impl Arg for FuturePublicResponseArg {
     type ValueType<'a> = FuturePublicResponse<'a>;
@@ -722,7 +722,7 @@ pub enum OptionPublicResponse<'a> {
     Pong(OptionPongResponse<'a>),
     Subscription(OptionSubscriptionResponse<'a>),
 }
-
+#[derive(Deserialize)]
 pub struct OptionPublicResponseArg;
 impl Arg for OptionPublicResponseArg {
     type ValueType<'a> = OptionPublicResponse<'a>;
@@ -740,7 +740,7 @@ pub enum PrivateResponse<'a> {
     Pong(PrivatePongResponse<'a>),
     Op(OpResponse<'a>),
 }
-
+#[derive(Deserialize)]
 pub struct PrivateResponseArg;
 impl Arg for PrivateResponseArg {
     type ValueType<'a> = PrivateResponse<'a>;

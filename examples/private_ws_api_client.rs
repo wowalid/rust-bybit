@@ -18,15 +18,5 @@ fn main() {
     client.subscribe_wallet();
     client.subscribe_greek();
 
-    if let Err(e) = client.run(|res| match res {
-        PrivateResponse::Position(res) => println!("Position: {:?}", res),
-        PrivateResponse::Execution(res) => println!("Execution: {:?}", res),
-        PrivateResponse::Order(res) => println!("Order: {:?}", res),
-        PrivateResponse::Wallet(res) => println!("Wallet: {:?}", res),
-        PrivateResponse::Greek(res) => println!("Greek: {:?}", res),
-        PrivateResponse::Pong(res) => println!("Pong: {:?}", res),
-        PrivateResponse::Op(res) => println!("Op: {:?}", res),
-    }) {
-        eprintln!("Error: {e}")
-    }
+ 
 }

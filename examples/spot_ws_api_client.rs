@@ -1,9 +1,16 @@
+use std::future::Future;
+use std::pin::Pin;
+
+use bybit::error::BybitError;
 use bybit::ws::response::SpotPublicResponse;
+use bybit::ws::response::SpotPublicResponseArg;
 use bybit::ws::spot;
 use bybit::KlineInterval;
 use bybit::WebSocketApiClient;
+use futures::future::BoxFuture;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
 
     let mut client = WebSocketApiClient::spot().build();
@@ -20,17 +27,17 @@ fn main() {
     client.subscribe_lt_ticker(lt_symbol);
     client.subscribe_lt_nav(lt_symbol);
 
-    let callback = |res: SpotPublicResponse| match res {
-        SpotPublicResponse::Orderbook(res) => println!("Orderbook: {:?}", res),
-        SpotPublicResponse::Trade(res) => println!("Trade: {:?}", res),
-        SpotPublicResponse::Ticker(res) => println!("Ticker: {:?}", res),
-        SpotPublicResponse::Kline(res) => println!("Kline: {:?}", res),
-        SpotPublicResponse::LtTicker(res) => println!("LtTicker: {:?}", res),
-        SpotPublicResponse::LtNav(res) => println!("LtNav: {:?}", res),
-        SpotPublicResponse::Op(res) => println!("Op: {:?}", res),
-    };
+    let callback: Box<dyn FnMut(SpotPublicResponseArg) -> Pin<Box<dyn Future<Output = Result<(), BybitError>> + Send>> + Send> =
+    Box::new(|res: SpotPublicResponseArg| {
+        Box::pin(async move {
+            // Process `res` here
+            println!("Received: ");
+            Ok(())
+        })
+    });
 
-    if let Err(e) = client.run(callback) {
-        eprintln!("Error: {e}")
+    // Assuming `client` is properly defined elsewhere and `run` matches the expected signature
+    if let Err(e) = client.run(callback).await {
+        eprintln!("Error: {e}");
     }
 }
