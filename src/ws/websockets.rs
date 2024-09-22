@@ -261,6 +261,15 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
                         match msg {
                             Message::Text(text) => {
                                 if !text.is_empty() {
+
+
+                                    if text.contains("subscribe") {
+                                        continue;
+                                    }
+            
+                                    if text.contains("auth") {
+                                        continue;
+                                    }
                                     let event: WE = from_str(&text)?;
                                     (self.handler)(event).await?;
                                 }
