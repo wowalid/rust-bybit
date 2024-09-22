@@ -9,6 +9,7 @@ use tokio_tungstenite::tungstenite::handshake::client::Response;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::{connect_async, MaybeTlsStream};
+use tokio::time::{timeout as tokio_timeout, sleep};
 use url::Url;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -94,30 +95,34 @@ type HandlerFuture = BoxFuture<'static, Result<()>>;
 
 pub struct WebSockets<'a, WE> {
     pub socket: Option<(WebSocketStream<MaybeTlsStream<TcpStream>>, Response)>,
-    handler: Box<dyn FnMut(WE) -> HandlerFuture + 'a + Send>
+    handler: Box<dyn FnMut(WE) -> HandlerFuture + 'a + Send>,
+    pub last_message_time: Option<std::time::SystemTime>,
+    pub timeout: Option<std::time::Duration>, 
 }
 
 impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
     /// New websocket holder with default configuration
     /// # Examples
     /// see examples/binance_websockets.rs
-    pub fn new<Callback>(handler: Callback) -> WebSockets<'a, WE>
+    pub fn new<Callback>(handler: Callback, timeout: Option<std::time::Duration>) -> WebSockets<'a, WE>
     where
         Callback: FnMut(WE) -> HandlerFuture + 'a + Send,
     {
-        Self::new_with_options(handler)
+        Self::new_with_options(handler, timeout)
     }
 
     /// New websocket holder with provided configuration
     /// # Examples
     /// see examples/binance_websockets.rs
-    pub fn new_with_options<Callback>(handler: Callback) -> WebSockets<'a, WE>
+    pub fn new_with_options<Callback>(handler: Callback, timeout: Option<std::time::Duration>) -> WebSockets<'a, WE>
     where
         Callback: FnMut(WE) -> HandlerFuture + 'a + Send,
     {
         WebSockets {
             socket: None,
-            handler: Box::new(handler)
+            handler: Box::new(handler),
+            last_message_time: None,
+            timeout,
         }
     }
 
@@ -233,36 +238,52 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
         while running.load(Ordering::Relaxed) {
             if let Some((ref mut socket, _)) = self.socket {
                 // TODO: return error instead of panic?
-                let message = socket.next().await.unwrap()?;
+
+                if let Some(timeout_duration) = self.timeout {
+                    // Check if we need to timeout due to inactivity
+                    if let Some(last_message_time) = self.last_message_time {
+                        let now = SystemTime::now();
+                        if now.duration_since(last_message_time)?.as_secs() > timeout_duration.as_secs() {
+                            println!("Timeout reached, closing connection.");
+                            self.disconnect().await?;
+                            break;
+                        }
+                    }
+                }
+
+
+                let message = tokio_timeout(std::time::Duration::from_secs(5), socket.next()).await;
 
                 match message {
-                    Message::Text(msg) => {
-                        if msg.is_empty() {
-                            return Ok(());
-                        }
+                    Ok(Some(Ok(msg))) => {
+                        self.last_message_time = Some(SystemTime::now()); // Update last message time
 
-                        if msg.contains("subscribe") {
-                            continue;
+                        match msg {
+                            Message::Text(text) => {
+                                if !text.is_empty() {
+                                    let event: WE = from_str(&text)?;
+                                    (self.handler)(event).await?;
+                                }
+                            }
+                            Message::Ping(_) => {
+                                socket.send(Message::Pong(Vec::new())).await?;
+                            }
+                            Message::Pong(_) => {
+                                // Handle pong if needed
+                            }
+                            Message::Close(_) => {
+                                println!("Socket closed");
+                                return Ok(());
+                            }
+                            _ => {}
                         }
-
-                        if msg.contains("auth") {
-                            continue;
-                        }
-
-                        let event: WE = from_str(msg.as_str())?;
-                        (self.handler)(event).await?;
                     }
-                    Message::Ping(payload) => {
-                        if let Some((ref mut socket, _)) = self.socket {
-                            socket.send(Message::Pong(Vec::new())).await?;
-                        }
+                    Ok(Some(Err(e))) => {
+                        println!("WebSocket error: {:?}", e);
+                        return Err(Error::Msg("WebSocket error".to_string()));
                     }
-                    Message::Pong(_) => {
-                        // Pong message received, handle if necessary
-                    }
-
-                    Message::Close(e) => {
-                        return Err(Error::Msg(format!("Disconnected {e:?}")));
+                    Err(_) => {
+                        // Timeout reached waiting for the message, check loop condition.
                     }
                     _ => {}
                 }
